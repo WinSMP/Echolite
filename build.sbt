@@ -34,9 +34,9 @@ assembly / assemblyMergeStrategy := {
 assembly / mainClass := Some(s"$projectPackage.$projectName")
 
 libraryDependencies ++= Seq(
-  "io.papermc.paper" % "paper-api" % "1.21.6-R0.1-SNAPSHOT" % Provided,
-  "net.dv8tion" % "JDA" % "5.2.3" % Provided,
-  "dev.vankka" % "mcdiscordreserializer" % "4.3.0" % Provided,
+  "io.papermc.paper" % "paper-api" % "1.21.10-R0.1-SNAPSHOT" % Provided,
+  "net.dv8tion" % "JDA" % "6.1.3" % Provided,
+  "dev.vankka" % "mcdiscordreserializer" % "4.4.0" % Provided,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
 )
 
