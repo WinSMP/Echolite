@@ -18,11 +18,15 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer
 
 import scala.jdk.CollectionConverters._
+import net.kyori.adventure.text.minimessage.MiniMessage
+import java.util.UUID
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration) extends ListenerAdapter  {
-    private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
-    private val minecraftSerializer = MinecraftSerializer.INSTANCE
+class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration, val replyTargets: mutable.Map[java.util.UUID, (String, String)]) extends ListenerAdapter {
+  private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
+  private val minecraftSerializer = MinecraftSerializer.INSTANCE
+  private val miniMessage = MiniMessage.miniMessage()
 
     override def onMessageReceived(event: MessageReceivedEvent): Unit = {
         if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot) {
@@ -84,28 +88,27 @@ class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration) exten
                 .reply(s"Player '$playerName' is not online or does not exist.")
                 .setEphemeral(true)
                 .queue()
-                return
+            return
         }
+
+        val user = event.getUser
+        replyTargets(player.getUniqueId) = (user.getId, user.getName)
 
         val nameComponent = Component.text(event.getUser.getName, NamedTextColor.DARK_AQUA)
         val messageComponent = Component.text(message, NamedTextColor.GRAY)
-        val placeholderMsg = "<dark_gray>(<gray><sender> -> <dark_green>you</gray>)</dark_gray> <message>"
+        val richMessage = miniMessage.deserialize(
+            "<dark_gray>(<gray><sender> -> <dark_green>you</dark_green></gray>)</dark_gray> <message><br><gray><italic>You can reply with /reply <message></italic></gray>",
+            Placeholder.component("sender", nameComponent),
+            Placeholder.component("message", messageComponent)
+        )
 
         if (!isFolia()) {
             new BukkitRunnable {
-                override def run(): Unit = player.sendRichMessage(
-                    placeholderMsg,
-                    Placeholder.component("sender", nameComponent),
-                    Placeholder.component("message", messageComponent)
-                )
+                override def run(): Unit = player.sendMessage(richMessage)
             }.runTask(plugin)
         } else {
             Bukkit.getGlobalRegionScheduler.execute(plugin, new Runnable {
-                override def run(): Unit = player.sendRichMessage(
-                    placeholderMsg,
-                    Placeholder.component("sender", nameComponent),
-                    Placeholder.component("message", messageComponent)
-                )
+                override def run(): Unit = player.sendMessage(richMessage)
             })
         }
 

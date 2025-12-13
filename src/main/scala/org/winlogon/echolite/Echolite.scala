@@ -19,6 +19,7 @@ import java.util.concurrent.{TimeUnit, Executors}
 import java.util.logging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.{Try, Random, Failure, Success}
 
@@ -46,6 +47,7 @@ class Echolite extends JavaPlugin with Listener {
     private implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
     private var config: Configuration = _
     private var discordBotManager: DiscordBotManager = _
+    val replyTargets: mutable.Map[java.util.UUID, (String, String)] = mutable.Map()
     val logger = this.getLogger
 
     def isFolia: Boolean = {
@@ -98,10 +100,12 @@ class Echolite extends JavaPlugin with Listener {
         logger.info(s"Hello World! I'm running on ${if (isFolia) "Folia" else "Bukkit"}")
 
         var state = ServerState(logger, config, Bukkit.getPluginManager(), this)
-        discordBotManager = DiscordBotManager(state)(ec)
+        discordBotManager = DiscordBotManager(state, replyTargets)(ec)
         discordBotManager.startBot()
 
         getServer.getPluginManager.registerEvents(new MinecraftChatBridge(config, discordBotManager), this)
+        ReplyCommand.createAndRegisterCommand(this, discordBotManager, replyTargets)
+
 
     }
 
@@ -110,7 +114,7 @@ class Echolite extends JavaPlugin with Listener {
     }
 }
 
-class DiscordBotManager(state: ServerState)(implicit ec: ExecutionContext) {
+class DiscordBotManager(state: ServerState, replyTargets: mutable.Map[java.util.UUID, (String, String)])(implicit ec: ExecutionContext) {
     private var jda: Option[JDA] = None
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
@@ -119,7 +123,7 @@ class DiscordBotManager(state: ServerState)(implicit ec: ExecutionContext) {
             state.logger.info("Starting Discord bot (awaiting ready)...")
             val bot = JDABuilder
                 .createDefault(state.config.token)
-                .addEventListeners(new DiscordChatBridge(state.plugin, state.config))
+                .addEventListeners(new DiscordChatBridge(state.plugin, state.config, replyTargets))
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .build()
                 .awaitReady()
@@ -207,6 +211,21 @@ class DiscordBotManager(state: ServerState)(implicit ec: ExecutionContext) {
             true
         } catch {
             case _: ClassNotFoundException => false
+        }
+    }
+
+    def getJDA: Option[JDA] = jda
+
+    def sendPrivateMessageToDiscord(userId: String, message: String): Unit = {
+        jda.foreach { bot =>
+            bot.retrieveUserById(userId).queue { user =>
+                user.openPrivateChannel().queue { privateChannel =>
+                    privateChannel.sendMessage(message).queue(
+                        _ => {}, // Success
+                        throwable => state.logger.severe(s"Failed to send private message to Discord user $userId: ${throwable.getMessage}")
+                    )
+                }
+            }
         }
     }
 }
