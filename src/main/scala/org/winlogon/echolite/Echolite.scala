@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
-import net.dv8tion.jda.api.{JDABuilder, JDA}
+import net.dv8tion.jda.api.{JDABuilder, JDA, EmbedBuilder}
 
 import org.bukkit.Bukkit
 import org.bukkit.event.{Listener, EventHandler}
@@ -216,13 +216,31 @@ class DiscordBotManager(state: ServerState, replyTargets: mutable.Map[java.util.
 
     def getJDA: Option[JDA] = jda
 
-    def sendPrivateMessageToDiscord(userId: String, message: String): Unit = {
+    def sendPrivateMessageToDiscord(userId: String, message: String, onSuccess: () => Unit, onFailure: Throwable => Unit): Unit = {
         jda.foreach { bot =>
             bot.retrieveUserById(userId).queue { user =>
                 user.openPrivateChannel().queue { privateChannel =>
                     privateChannel.sendMessage(message).queue(
-                        _ => {}, // Success
-                        throwable => state.logger.severe(s"Failed to send private message to Discord user $userId: ${throwable.getMessage}")
+                        _ => onSuccess(),
+                        throwable => onFailure(throwable)
+                    )
+                }
+            }
+        }
+    }
+
+    def sendEmbedToUser(privateMessage: PrivateMessage, onSuccess: () => Unit, onFailure: Throwable => Unit): Unit = {
+        jda.foreach { bot =>
+            bot.retrieveUserById(privateMessage.recipient).queue { user =>
+                user.openPrivateChannel().queue { privateChannel =>
+                    val player = Bukkit.getOfflinePlayer(privateMessage.sender)
+                    val embed = new EmbedBuilder()
+                        .setTitle("New Message")
+                        .setDescription(s"Hello! Player ${player.getName} (`${privateMessage.sender}`) has sent you a message: **${privateMessage.message}**")
+                        .build()
+                    privateChannel.sendMessageEmbeds(embed).queue(
+                        _ => onSuccess(),
+                        throwable => onFailure(throwable)
                     )
                 }
             }

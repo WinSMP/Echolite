@@ -23,37 +23,70 @@ import java.util.UUID
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration, val replyTargets: mutable.Map[java.util.UUID, (String, String)]) extends ListenerAdapter {
-  private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
-  private val minecraftSerializer = MinecraftSerializer.INSTANCE
-  private val miniMessage = MiniMessage.miniMessage()
+class DiscordChatBridge(
+    val plugin: JavaPlugin,
+    val config: Configuration,
+    val replyTargets: mutable.Map[java.util.UUID, (String, String)]
+) extends ListenerAdapter {
+    private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
+    private val minecraftSerializer = MinecraftSerializer.INSTANCE
+    private val miniMessage = MiniMessage.miniMessage()
 
     override def onMessageReceived(event: MessageReceivedEvent): Unit = {
-        if (!event.getChannel.getId.equals(config.channelId) || event.getAuthor.isBot) {
+        if (event.getAuthor.isBot) {
             return
         }
 
-        val roles = event.getMember.getRoles
-        val userRole = if (!roles.isEmpty) Some(roles.get(0).getName()) else None
+        if (event.getChannel.getId.equals(config.channelId)) {
+            val roles = event.getMember.getRoles
+            val userRole = if (!roles.isEmpty) Some(roles.get(0).getName()) else None
 
-        val rawConfig = config.discordMessage
-            .replace("$display_name", event.getAuthor.getEffectiveName)
-            .replace("$handle", event.getAuthor.getName)
-            .replace("$role", userRole.getOrElse(config.defaultRole))
+            val rawConfig = config.discordMessage
+                .replace("$display_name", event.getAuthor.getEffectiveName)
+                .replace("$handle", event.getAuthor.getName)
+                .replace("$role", userRole.getOrElse(config.defaultRole))
 
-        val discordMessageComponent: Component = minecraftSerializer.serialize(event.getMessage.getContentDisplay)
-        val discordMessageLegacy = legacySerializer.serialize(discordMessageComponent)
-        val finalLegacyMessage = rawConfig.replace("$message", discordMessageLegacy)
-        val finalComponent = legacySerializer.deserialize(finalLegacyMessage)
+            val discordMessageComponent: Component =
+                minecraftSerializer.serialize(event.getMessage.getContentDisplay)
+            val discordMessageLegacy = legacySerializer.serialize(discordMessageComponent)
+            val finalLegacyMessage = rawConfig.replace("$message", discordMessageLegacy)
+            val finalComponent = legacySerializer.deserialize(finalLegacyMessage)
 
-        if (!isFolia()) {
-            new BukkitRunnable {
-                override def run(): Unit = Bukkit.broadcast(finalComponent)
-            }.runTask(plugin)
+            if (!isFolia()) {
+                new BukkitRunnable {
+                    override def run(): Unit = Bukkit.broadcast(finalComponent)
+                }.runTask(plugin)
+            } else {
+                Bukkit.getGlobalRegionScheduler.execute(
+                    plugin,
+                    new Runnable {
+                        override def run(): Unit = Bukkit.broadcast(finalComponent)
+                    }
+                )
+            }
+        } else if (event.isFromGuild) {
+            // not a DM, and not in the right channel
+            return
         } else {
-            Bukkit.getGlobalRegionScheduler.execute(plugin, new Runnable {
-                override def run(): Unit = Bukkit.broadcast(finalComponent)
-            })
+            // This is a DM, check if it's a reply to a player
+            val userId = event.getAuthor.getId
+            val message = event.getMessage.getContentRaw
+            replyTargets.find((_, v) => v._1 == userId) match {
+                case Some((playerUUID, _)) =>
+                    val player = Bukkit.getPlayer(playerUUID)
+                    if (player != null && player.isOnline) {
+                        val nameComponent = Component.text(event.getAuthor.getName, NamedTextColor.DARK_AQUA)
+                        val messageComponent = Component.text(message, NamedTextColor.GRAY)
+                        val richMessage = miniMessage.deserialize(
+                            "<dark_gray>(<gray><sender> -> <dark_green>you</dark_green></gray>)</dark_gray> <message>",
+                            Placeholder.component("sender", nameComponent),
+                            Placeholder.component("message", messageComponent)
+                        )
+                        player.sendMessage(richMessage)
+                    }
+                case None =>
+                // it's a DM, but not a reply to a player
+            }
         }
     }
 
@@ -80,7 +113,11 @@ class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration, val r
         }
     }
 
-    private def messageCommand(message: String, player: Player, event: SlashCommandInteractionEvent): Unit = {
+    private def messageCommand(
+        message: String,
+        player: Player,
+        event: SlashCommandInteractionEvent
+    ): Unit = {
         val playerName = player.getName
 
         if (player == null || !player.isOnline) {
@@ -97,7 +134,7 @@ class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration, val r
         val nameComponent = Component.text(event.getUser.getName, NamedTextColor.DARK_AQUA)
         val messageComponent = Component.text(message, NamedTextColor.GRAY)
         val richMessage = miniMessage.deserialize(
-            "<dark_gray>(<gray><sender> -> <dark_green>you</dark_green></gray>)</dark_gray> <message><br><gray><italic>You can reply with /reply <message></italic></gray>",
+            "<dark_gray>(<gray><sender> -> <dark_green>you</dark_green></gray>)</dark_gray> <message>",
             Placeholder.component("sender", nameComponent),
             Placeholder.component("message", messageComponent)
         )
@@ -107,9 +144,12 @@ class DiscordChatBridge(val plugin: JavaPlugin, val config: Configuration, val r
                 override def run(): Unit = player.sendMessage(richMessage)
             }.runTask(plugin)
         } else {
-            Bukkit.getGlobalRegionScheduler.execute(plugin, new Runnable {
-                override def run(): Unit = player.sendMessage(richMessage)
-            })
+            Bukkit.getGlobalRegionScheduler.execute(
+                plugin,
+                new Runnable {
+                    override def run(): Unit = player.sendMessage(richMessage)
+                }
+            )
         }
 
         event
