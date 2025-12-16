@@ -19,16 +19,6 @@ import java.util.regex.Pattern
 
 class MinecraftChatBridge(val config: Configuration, val discordBotManager: DiscordBotManager) : Listener {
 
-    private fun String.getDiscordCompatible(): String {
-        return if (isEmpty() || !contains('_')) {
-            this
-        } else {
-            // (?<!_)_(?<!_) replaces single underscores not flanked by other underscores
-            // Use replaceAll instead of replaceAllIn
-            this.replace(Regex("(?<!_)_(?!_)"), "\\\\_") // Corrected escape
-        }
-    }
-
     private val plainTextSerializer = PlainTextComponentSerializer.plainText()
 
     @EventHandler(priority = EventPriority.LOW)
