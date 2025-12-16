@@ -1,44 +1,39 @@
-// SPDX-License-Identifier: MPL-2.0
 package org.winlogon.echolite
 
+import io.papermc.paper.plugin.loader.PluginClasspathBuilder
+import io.papermc.paper.plugin.loader.PluginLoader
 import io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver
-import io.papermc.paper.plugin.loader.{PluginClasspathBuilder, PluginLoader}
 import org.eclipse.aether.artifact.DefaultArtifact
 import org.eclipse.aether.graph.Dependency
 import org.eclipse.aether.repository.RemoteRepository
 
-class EcholiteLoader extends PluginLoader {
-    override def classloader(classpathBuilder: PluginClasspathBuilder): Unit = {
-        val scalaVersion = "3.3.5"
-        val jdaVersion = "5.3.2"
+class EcholiteLoader : PluginLoader {
+    override fun classloader(classpathBuilder: PluginClasspathBuilder) {
+        val jdaVersion = "6.1.3" // Consistent with build.gradle.kts
+        val mcDiscordReserializerVersion = "4.4.0" // Consistent with build.gradle.kts
 
         val resolver = MavenLibraryResolver()
 
         resolver.addRepository(
             RemoteRepository.Builder(
-                "central", 
-                "default", 
+                "central",
+                "default",
                 MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR
             ).build()
         )
 
+        // No need for scala3-library dependency since we are porting to Kotlin
+
         resolver.addDependency(
             Dependency(
-                DefaultArtifact(s"org.scala-lang:scala3-library_3:$scalaVersion"),
+                DefaultArtifact("net.dv8tion:JDA:$jdaVersion"),
                 null
             )
         )
 
         resolver.addDependency(
             Dependency(
-                DefaultArtifact(s"net.dv8tion:JDA:$jdaVersion"),
-                null
-            )
-        )
-
-        resolver.addDependency(
-            Dependency(
-                DefaultArtifact("dev.vankka:mcdiscordreserializer:4.3.0"),
+                DefaultArtifact("dev.vankka:mcdiscordreserializer:$mcDiscordReserializerVersion"),
                 null
             )
         )

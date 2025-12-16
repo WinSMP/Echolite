@@ -1,8 +1,8 @@
-name: "Echolite"
-version: "0.4.1-SNAPSHOT"
-main: "org.winlogon.echolite.Echolite"
+name: "@NAME@"
+version: "@VERSION@"
+main: "@PACKAGE@.Echolite"
 api-version: "1.21"
 description: "Minecraft–Discord chat bridge with rich formatting, slash commands, and status updates."
 website: "https://github.com/walker84837/Echolite"
-loader: "org.winlogon.echolite.EcholiteLoader"
+loader: "@PACKAGE@.EcholiteLoader"
 folia-supported: true
