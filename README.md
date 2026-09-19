@@ -1,6 +1,6 @@
 # Echolite
 
-Echolite is a lightweight Scala‑based Minecraft plugin that bridges your Paper (or Folia) server’s chat with a Discord channel.
+Echolite is a lightweight Kotlin‑based Minecraft plugin that bridges your Paper (or Folia) server's chat with a Discord channel.
 
 Messages sent on your Minecraft server will relayed to Discord, and Discord messages (from a specified channel) will be broadcast back into Minecraft.
 
@@ -15,7 +15,7 @@ Messages sent on your Minecraft server will relayed to Discord, and Discord mess
 ## Requirements
 
 - **Server**:
-    - Java 21+
+    - Java 25+
     - A [Paper](https://papermc.io) or any of its forks, like [Purpur](https://purpurmc.org/).
 - **Bot**:
     - A Discord bot token with `MESSAGE_CONTENT` intent enabled and permission to read/send messages in the target channel
@@ -24,10 +24,10 @@ Messages sent on your Minecraft server will relayed to Discord, and Discord mess
 
 1. **Build**
    ```bash
-   sbt assembly
+   ./gradlew build
    ```
 2. **Deploy**
-   - Move `Echolite.jar` into your server’s `plugins/` directory.
+   - Move `Echolite.jar` into your server's `plugins/` directory.
    - Restart your server to generate the default `config.yml`.
 
 ## Configuration
@@ -68,14 +68,21 @@ message:
 
 ## Placeholders
 
-- **Discord→Minecraft** (`message.minecraft`): 
-  - `$user_name` → Bukkit player name
-  - `$message`   → Raw chat tex
-- **Minecraft→Discord** (`message.discord`):
-  - `$display_name` → Member’s Discord display name
-  - `$handle`       → Discord username (without discriminator)
-  - `$role`         → First role name or `default-role`
-  - `$message`      → Message content, serialized via Adventure→legacy
+**Discord → Minecraft** (`message.minecraft`): 
+
+|Placeholder|Processed value|
+|---|---|
+|`$user_name`|Bukkit player name|
+|`$message`|Raw chat text|
+
+**Minecraft → Discord** (`message.discord`):
+
+|Placeholder|Processed value|
+|---|---|
+|`$display_name`|Member’s Discord display name|
+|`$handle`|Discord username (without discriminator)|
+|`$role`|First role name or `default-role`|
+|`$message`|Message content, serialized via Adventure→legacy|
 
 ## Slash Commands
 
@@ -84,22 +91,10 @@ Echolite registers two slash commands (with ephemeral replies) when the bot star
 - `/list`: Lists all online Minecraft
 - `/msg <player> <message>`: Sends a one‑way message to a player
 
-## Troubleshooting
-
-- **No messages on Discord**
-  - Verify bot token, intents, and channel‑id in `config.yml`.
-  - Check server console for “Failed to send message to Discord” errors.
-- **Plugin fails to load**
-  - Ensure `config.yml` has all required keys (`default-role`, `status-list`, etc.).
-  - Look for “The Discord bot isn’t configured…” in console—means token/ID are blank or default placeholders.
-- **Slash commands missing**
-  - Wait a minute after bot start (Discord can be slow to register slash commands).
-  - Confirm the bot has “applications.commands” scope in your server.
-
 ## Roadmap
 
-- [ ] Two‑way private messaging support (Discord ↔ Minecraft)
+- [X] Two‑way private messaging support (Discord ↔ Minecraft)
 
 ## License
 
-Licensed under the [MPL-2.0](LICENSE) license.
+Licensed under the [GPL-3.0](LICENSE) license.

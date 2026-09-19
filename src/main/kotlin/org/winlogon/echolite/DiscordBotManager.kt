@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: GPL-3.0-only
 package org.winlogon.echolite
 
 import net.dv8tion.jda.api.EmbedBuilder
@@ -12,8 +12,8 @@ import org.bukkit.Bukkit
 
 import java.util.UUID
 import java.util.concurrent.*
-import kotlin.random.Random
 import java.util.logging.Logger
+import kotlin.random.Random
 
 class DiscordBotManager(
     private val state: ServerState,
@@ -23,7 +23,6 @@ class DiscordBotManager(
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val logger: Logger = state.logger
 
-    // Using a cached thread pool for asynchronous operations, similar to Scala's ExecutionContext
     private val asyncExecutor: ExecutorService = Executors.newCachedThreadPool()
 
     fun startBot() {
@@ -109,17 +108,6 @@ class DiscordBotManager(
         }
         scheduleNextStatusChange()
     }
-
-    fun isFolia(): Boolean {
-        return try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
-            true
-        } catch (e: ClassNotFoundException) {
-            false
-        }
-    }
-
-    fun getJDA(): JDA? = jda
 
     fun sendPrivateMessageToDiscord(userId: String, message: String, onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) {
         jda?.let { bot ->

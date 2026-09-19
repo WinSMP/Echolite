@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: GPL-3.0-only
 package org.winlogon.echolite
 
-// Configuration case class from Echolite.scala
 data class Configuration(
     val token: String,
     val channelId: String,

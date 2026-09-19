@@ -1,7 +1,7 @@
-# EditorConfig for Scala based on Google Style guidelines (adapted for Scala)
+# EditorConfig for based on Google Style guidelines
 root = true
 
-[*.scala]
+[*.{kt,java}]
 # Use UTF-8 encoding as specified
 charset = utf-8
 

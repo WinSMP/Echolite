@@ -1,7 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    kotlin("jvm") version "2.2.21"
+    kotlin("jvm") version "2.3.0"
     id("com.gradleup.shadow") version "9.3.0"
 }
 
@@ -14,13 +14,15 @@ val basePackage = group.toString()
 
 repositories {
     mavenCentral()
+    maven("https://maven.winlogon.org/releases")
     maven("https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
-    compileOnly("net.dv8tion:JDA:6.1.3")
-    compileOnly("dev.vankka:mcdiscordreserializer:4.4.0")
+    compileOnly(libs.paper.api)
+    compileOnly(libs.jda)
+    compileOnly(libs.mcdiscordreserializer)
+    compileOnly(libs.asynccraftr)
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -28,7 +30,7 @@ dependencies {
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 }
 
 tasks.test {

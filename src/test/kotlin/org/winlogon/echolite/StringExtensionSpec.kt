@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 package org.winlogon.echolite
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -70,9 +71,9 @@ class StringExtensionSpec {
     fun mixedPatternALeavesTheFirstTwoTogetherButEscapesTheFinalOne() {
         val original = "__a_"
         // positions:
-        //   index 0: '_' but next char is '_' ⇒ (?!_) fails ⇒ not replaced
-        //   index 1: '_' but previous char is '_' ⇒ (?<!_) fails ⇒ not replaced
-        //   index 3: '_' is standalone ⇒ replaced
+        //   index 0: '_' but next char is '_' => (?!_) fails => not replaced
+        //   index 1: '_' but previous char is '_' => (?<!_) fails => not replaced
+        //   index 3: '_' is standalone => replaced
         val expected = "__a\\_"
         assertEquals(expected, original.getDiscordCompatible())
     }

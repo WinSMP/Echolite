@@ -6,3 +6,4 @@ description: "Minecraft–Discord chat bridge with rich formatting, slash comman
 website: "https://github.com/walker84837/Echolite"
 loader: "@PACKAGE@.EcholiteLoader"
 folia-supported: true
+license: "GPL-3.0-only"

@@ -1,6 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 package org.winlogon.echolite
 
-// This extension function is moved from MinecraftChatBridge.kt to make it testable and reusable.
+/**
+  * Returns a string escaped so Discord's Markdown formatter keeps identifiers such as usernames
+  * the same.
+  */
 fun String.getDiscordCompatible(): String {
     return if (isEmpty() || !contains('_')) {
         this
@@ -9,4 +14,3 @@ fun String.getDiscordCompatible(): String {
         this.replace(Regex("(?<!_)_(?!_)")) { "\\_" }
     }
 }
-

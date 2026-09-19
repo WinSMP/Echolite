@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: GPL-3.0-only
 package org.winlogon.echolite
 
 import org.bukkit.Bukkit
@@ -6,6 +6,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
+import org.winlogon.asynccraftr.AsyncCraftr
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -21,13 +22,13 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit // For Folia scheduler delays
-import kotlin.collections.set // Explicitly import 'set' for map operations
+import kotlin.collections.set
 
 class DiscordChatBridge(
     val plugin: JavaPlugin,
     val config: Configuration,
     val replyTargets: ConcurrentHashMap<UUID, Pair<String, String>>
-) : ListenerAdapter() { // extends ListenerAdapter in Scala becomes : ListenerAdapter() in Kotlin
+) : ListenerAdapter() {
     private val legacySerializer = LegacyComponentSerializer.legacyAmpersand()
     private val minecraftSerializer = MinecraftSerializer.INSTANCE
     private val miniMessage = MiniMessage.miniMessage()
@@ -52,18 +53,8 @@ class DiscordChatBridge(
             val finalLegacyMessage = rawConfig.replace("\$message", discordMessageLegacy)
             val finalComponent = legacySerializer.deserialize(finalLegacyMessage)
 
-            if (!isFolia()) {
-                object : BukkitRunnable() {
-                    override fun run() {
-                        Bukkit.broadcast(finalComponent)
-                    }
-                }.runTask(plugin)
-            } else {
-                // Folia's scheduler.execute takes a Runnable
-                Bukkit.getGlobalRegionScheduler().execute(
-                    plugin,
-                    Runnable { Bukkit.broadcast(finalComponent) }
-                )
+            AsyncCraftr.runGlobalTask(plugin) {
+                Bukkit.broadcast(finalComponent)
             }
         } else if (event.isFromGuild) {
             // not a DM, and not in the right channel
@@ -150,31 +141,13 @@ class DiscordChatBridge(
             Placeholder.component("message", messageComponent)
         )
 
-        if (!isFolia()) {
-            object : BukkitRunnable() {
-                override fun run() {
-                    player.sendMessage(richMessage)
-                }
-            }.runTask(plugin)
-        } else {
-            Bukkit.getGlobalRegionScheduler().execute(
-                plugin,
-                Runnable { player.sendMessage(richMessage) }
-            )
+        AsyncCraftr.runGlobalTask(plugin) {
+            player.sendMessage(richMessage)
         }
 
         event
             .reply("Message sent to $playerName!")
             .setEphemeral(true)
             .queue()
-    }
-
-    private fun isFolia(): Boolean {
-        return try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
-            true
-        } catch (e: ClassNotFoundException) {
-            false
-        }
     }
 }

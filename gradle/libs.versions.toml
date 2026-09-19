@@ -1,0 +1,11 @@
+[versions]
+paper = "26.1.2.build.+"
+jda = "6.6.0"
+asynccraftr = "0.2.0"
+mcd = "4.4.0"
+
+[libraries]
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
+asynccraftr = { module = "org.winlogon:asynccraftr", version.ref = "asynccraftr" }
+mcdiscordreserializer = { module = "dev.vankka:mcdiscordreserializer", version.ref = "mcd" }

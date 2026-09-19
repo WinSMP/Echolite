@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-20
+// SPDX-License-Identifier: GPL-3.0-only
 package org.winlogon.echolite
 
 import org.bukkit.plugin.PluginManager
