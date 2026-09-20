@@ -64,7 +64,13 @@ class DiscordBotManager(
         if (state.config.sendStatusMessages) {
             sendMessageToDiscord("**Server Status** The server is shutting down.")
         }
-        jda?.shutdown()
+
+        // Shutdown the JDA instance
+        jda?.let {
+            it.shutdownNow()
+            it.awaitShutdown()
+        }
+
         scheduler.shutdown()
         asyncExecutor.shutdown() // Shutdown the async executor as well
         jda = null
