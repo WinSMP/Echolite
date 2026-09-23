@@ -128,11 +128,11 @@ class DiscordBotManager(
                 user.openPrivateChannel().queue { privateChannel ->
                     val player = Bukkit.getOfflinePlayer(privateMessage.sender)
                     val embed = EmbedBuilder()
-                        .setTitle("New Message")
-                        .setDescription(
-                            "Hello! Player ${player.name} (`${privateMessage.sender}`) has sent you a message: **${privateMessage.message}**"
-                        )
+                        .setTitle("New Message from ${player.name}")
+                        .setDescription(privateMessage.message)
+                        .setFooter("To reply, send a direct message to this bot.")
                         .build()
+
                     privateChannel.sendMessageEmbeds(embed).queue(
                         { onSuccess() },
                         { throwable -> onFailure(throwable) }

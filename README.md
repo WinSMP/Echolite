@@ -10,6 +10,7 @@ Messages sent on your Minecraft server will relayed to Discord, and Discord mess
 - **Status cycling** for your bot presence (configurable list, randomized every 5–10 minutes)
 - **Join/leave/death announcements** in Discord (toggleable)
 - **Fully configurable** message formats with placeholders
+- **Private messaging** (`/msg`, `/discord-reply`) with persistent reply targets
 - **Folia support**
 
 ## Requirements
